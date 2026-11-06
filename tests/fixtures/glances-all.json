@@ -1,0 +1,512 @@
+{
+ "containers": [
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 3.951747572815534
+   },
+   "engine": "docker",
+   "id": "f6747af2c86cb9e08a1f7f047b8e33586bd32dc368693c9f7d7fa45034b00721",
+   "image": [
+    "demo/adminer:latest"
+   ],
+   "memory": {
+    "inactive_file": 12148736,
+    "limit": 6111100928,
+    "usage": 141836288
+   },
+   "name": "adminer",
+   "status": "healthy",
+   "uptime": "2 hours"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.41761557177615566
+   },
+   "engine": "docker",
+   "id": "64c785b2f5c5aef74109c366424c65d42ba7fddd9a54b5c14035f61621c378e6",
+   "image": [
+    "demo/redis:latest"
+   ],
+   "memory": {
+    "inactive_file": 11022336,
+    "limit": 3896508416,
+    "usage": 176508928
+   },
+   "name": "redis",
+   "status": "running",
+   "uptime": "2 hours"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.3218491484184915
+   },
+   "engine": "docker",
+   "id": "bd32a1e0166d5f683881c85ab2493574846423014b836552448ef397acb3f47d",
+   "image": [
+    "demo/whoami:latest"
+   ],
+   "memory": {
+    "inactive_file": 25096192,
+    "limit": 3896508416,
+    "usage": 188264448
+   },
+   "name": "whoami",
+   "status": "running",
+   "uptime": "26 mins"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.1625
+   },
+   "engine": "docker",
+   "id": "4e6298b51f98e2e1db782d8f5ab7b768c595ac17d45409300ba442e6bc22039e",
+   "image": [
+    "demo/postgres:latest"
+   ],
+   "memory": {
+    "inactive_file": 34332672,
+    "limit": 6111100928,
+    "usage": 224882688
+   },
+   "name": "postgres",
+   "status": "running",
+   "uptime": "2 hours"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.04547677261613692
+   },
+   "engine": "docker",
+   "id": "b60b756e2247f84ad555c5cf456cf013f8a185539a7e0c618530217a9eb27984",
+   "image": [
+    "demo/nginx:latest"
+   ],
+   "memory": {
+    "inactive_file": 77680640,
+    "limit": 3896508416,
+    "usage": 655302656
+   },
+   "name": "nginx",
+   "status": "running",
+   "uptime": "15 mins"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.041658536585365856
+   },
+   "engine": "docker",
+   "id": "6bf550784bef6e51b0556a4a97aa1e0bfc9c13b86ea0c047a05041b6644bd8d6",
+   "image": [
+    "ghcr.io/api/api:latest"
+   ],
+   "memory": {
+    "inactive_file": 13479936,
+    "limit": 3896508416,
+    "usage": 39153664
+   },
+   "name": "stack-api",
+   "status": "healthy",
+   "uptime": "2 hours"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.026867167919799498
+   },
+   "engine": "docker",
+   "id": "1cbdda315a253e6aae3de58a3a724dc8e939a0acebe218fc5a05502b7fbc9739",
+   "image": [
+    "demo/busybox:latest"
+   ],
+   "memory": {
+    "inactive_file": 499712,
+    "limit": 6111186944,
+    "usage": 19668992
+   },
+   "name": "busybox",
+   "status": "running",
+   "uptime": "2 hours"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.02024449877750611
+   },
+   "engine": "docker",
+   "id": "16902d34241137abdb6e77c1d7be8487319a3dd79dca8300e74b4998c4bbce0e",
+   "image": [
+    "ghcr.io/helper/helper:latest"
+   ],
+   "memory": {
+    "inactive_file": 297717760,
+    "limit": 6111100928,
+    "usage": 455426048
+   },
+   "name": "helper",
+   "status": "running",
+   "uptime": "2 hours"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.010147783251231527
+   },
+   "engine": "docker",
+   "id": "c4ef0239e8b89cd3948d2c76744d297d590da6bbc58a8dfac860f51a88a874b5",
+   "image": [
+    "demo/grafana:latest"
+   ],
+   "memory": {
+    "inactive_file": 8843264,
+    "limit": 3896508416,
+    "usage": 42594304
+   },
+   "name": "grafana",
+   "status": "running",
+   "uptime": "51 mins"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.00624390243902439
+   },
+   "engine": "docker",
+   "id": "be81e7de0e8419adbc3603ea7e8bca5c862bc6ce2d8e9be344e81aa1c64c5d68",
+   "image": [
+    "demo/app:2.7.3"
+   ],
+   "memory": {
+    "inactive_file": 18427904,
+    "limit": 268435456,
+    "usage": 170004480
+   },
+   "name": "app-web-1",
+   "status": "running",
+   "uptime": "an hour"
+  },
+  {
+   "cpu": {
+    "limit": 4.0,
+    "total": 0.0
+   },
+   "engine": "docker",
+   "id": "391440b830654dd2873516ef8ccc677c1907530f92857eff130dc644c0440659",
+   "image": [
+    "ghcr.io/demo/web:latest"
+   ],
+   "memory": {
+    "inactive_file": 21553152,
+    "limit": 3896508416,
+    "usage": 137314304
+   },
+   "name": "web",
+   "status": "healthy",
+   "uptime": "2 hours"
+  }
+ ],
+ "cpu": {
+  "cpucore": 4,
+  "ctx_switches": 24134,
+  "ctx_switches_gauge": 71214416,
+  "ctx_switches_rate_per_sec": 4575.0,
+  "guest": 0.0,
+  "idle": 87.5,
+  "interrupts": 11018,
+  "interrupts_gauge": 25817588,
+  "interrupts_rate_per_sec": 2088.0,
+  "iowait": 0.2,
+  "irq": 0.0,
+  "nice": 0.0,
+  "soft_interrupts": 5864,
+  "soft_interrupts_gauge": 13894903,
+  "soft_interrupts_rate_per_sec": 1111.0,
+  "steal": 0.0,
+  "syscalls": 0,
+  "syscalls_gauge": 0,
+  "syscalls_rate_per_sec": 0,
+  "system": 2.9,
+  "time_since_update": 5.2744200229644775,
+  "total": 12.3,
+  "user": 9.4
+ },
+ "fs": [
+  {
+   "device_name": "/dev/sda2",
+   "free": 68095459328,
+   "fs_type": "ext4",
+   "key": "mnt_point",
+   "mnt_point": "/",
+   "options": "rw,relatime",
+   "percent": 38.4,
+   "size": 116438282240,
+   "used": 42380832768
+  },
+  {
+   "device_name": "/dev/sdb1",
+   "free": 482483130368,
+   "fs_type": "ext4",
+   "key": "mnt_point",
+   "mnt_point": "/srv/internal",
+   "options": "rw,relatime",
+   "percent": 0.7,
+   "size": 491103363072,
+   "used": 3602419712
+  },
+  {
+   "device_name": "/dev/sdd1",
+   "free": 463916425216,
+   "fs_type": "ext4",
+   "key": "mnt_point",
+   "mnt_point": "/srv/big",
+   "options": "rw,noatime",
+   "percent": 50.3,
+   "size": 983349346304,
+   "used": 469405990912
+  },
+  {
+   "device_name": "/dev/sde2",
+   "free": 465888329728,
+   "fs_type": "ext4",
+   "key": "mnt_point",
+   "mnt_point": "/srv/small",
+   "options": "rw,relatime",
+   "percent": 0.0,
+   "size": 490899955712,
+   "used": 49152
+  },
+  {
+   "device_name": "/dev/sdc1",
+   "free": 119006478336,
+   "fs_type": "ext4",
+   "key": "mnt_point",
+   "mnt_point": "/srv/fast",
+   "options": "rw,relatime",
+   "percent": 0.0,
+   "size": 125425008640,
+   "used": 40960
+  },
+  {
+   "device_name": "/dev/sda2",
+   "free": 68095459328,
+   "fs_type": "ext4",
+   "key": "mnt_point",
+   "mnt_point": "/etc",
+   "options": "ro,nosuid,relatime",
+   "percent": 38.4,
+   "size": 116438282240,
+   "used": 42380832768
+  },
+  {
+   "device_name": "/dev/sda2",
+   "free": 68095459328,
+   "fs_type": "ext4",
+   "key": "mnt_point",
+   "mnt_point": "/tmp",
+   "options": "rw,nosuid,relatime",
+   "percent": 38.4,
+   "size": 116438282240,
+   "used": 42380832768
+  },
+  {
+   "device_name": "/dev/sda2",
+   "free": 68095459328,
+   "fs_type": "ext4",
+   "key": "mnt_point",
+   "mnt_point": "/usr",
+   "options": "ro,nosuid,relatime",
+   "percent": 38.4,
+   "size": 116438282240,
+   "used": 42380832768
+  },
+  {
+   "device_name": "/dev/sda2",
+   "free": 68095459328,
+   "fs_type": "ext4",
+   "key": "mnt_point",
+   "mnt_point": "/var/tmp",
+   "options": "rw,nosuid,relatime",
+   "percent": 38.4,
+   "size": 116438282240,
+   "used": 42380832768
+  },
+  {
+   "device_name": "ssd:internal:1tb:500gb",
+   "free": 1531294363648,
+   "fs_type": "fuse.unionfs",
+   "key": "mnt_point",
+   "mnt_point": "/srv/data",
+   "options": "rw,relatime,user_id=0,group_id=0,default_permissions,allow_other",
+   "percent": 23.6,
+   "size": 2090777673728,
+   "used": 473008500736
+  }
+ ],
+ "load": {
+  "cpucore": 4,
+  "min1": 0.56201171875,
+  "min15": 0.5859375,
+  "min5": 0.5439453125
+ },
+ "mem": {
+  "active": 2174066688,
+  "available": 3602100224,
+  "buffers": 65777664,
+  "cached": 3778469888,
+  "free": 367861760,
+  "inactive": 3025416192,
+  "percent": 41.1,
+  "percent_max": 41.1,
+  "percent_mean": 40.67,
+  "percent_min": 40.4,
+  "shared": 298811392,
+  "total": 6111186944,
+  "used": 2509086720
+ },
+ "memswap": {
+  "free": 3802918912,
+  "percent": 11.5,
+  "sin": 18272256,
+  "sout": 536100864,
+  "time_since_update": 5.27449107170105,
+  "total": 4294963200,
+  "used": 492044288
+ },
+ "network": [
+  {
+   "alias": null,
+   "bytes_all": 187458,
+   "bytes_all_gauge": 5951846852,
+   "bytes_all_rate_per_sec": 35634.0,
+   "bytes_recv": 38340,
+   "bytes_recv_gauge": 4636824262,
+   "bytes_recv_rate_per_sec": 7288.0,
+   "bytes_sent": 149118,
+   "bytes_sent_gauge": 1315022590,
+   "bytes_sent_rate_per_sec": 28346.0,
+   "interface_name": "eth0",
+   "key": "interface_name",
+   "speed": 1048576000,
+   "time_since_update": 5.26052451133728
+  },
+  {
+   "alias": null,
+   "bytes_all": 0,
+   "bytes_all_gauge": 662,
+   "bytes_all_rate_per_sec": 0.0,
+   "bytes_recv": 0,
+   "bytes_recv_gauge": 86,
+   "bytes_recv_rate_per_sec": 0.0,
+   "bytes_sent": 0,
+   "bytes_sent_gauge": 576,
+   "bytes_sent_rate_per_sec": 0.0,
+   "interface_name": "tailscale0",
+   "key": "interface_name",
+   "speed": 0,
+   "time_since_update": 5.26052451133728
+  },
+  {
+   "alias": null,
+   "bytes_all": 0,
+   "bytes_all_gauge": 0,
+   "bytes_all_rate_per_sec": 0,
+   "bytes_recv": 0,
+   "bytes_recv_gauge": 0,
+   "bytes_recv_rate_per_sec": 0,
+   "bytes_sent": 0,
+   "bytes_sent_gauge": 0,
+   "bytes_sent_rate_per_sec": 0,
+   "interface_name": "wlan0",
+   "key": "interface_name",
+   "speed": 0,
+   "time_since_update": 5.26052451133728
+  }
+ ],
+ "processcount": {
+  "pid_max": 4194304,
+  "running": 1,
+  "sleeping": 214,
+  "thread": 887,
+  "total": 291
+ },
+ "sensors": [
+  {
+   "critical": null,
+   "key": "label",
+   "label": "Ambient",
+   "type": "temperature_core",
+   "unit": "C",
+   "value": 49,
+   "warning": null
+  },
+  {
+   "critical": null,
+   "key": "label",
+   "label": "CPU",
+   "type": "temperature_core",
+   "unit": "C",
+   "value": 64,
+   "warning": null
+  },
+  {
+   "critical": 105,
+   "key": "label",
+   "label": "Core 0",
+   "type": "temperature_core",
+   "unit": "C",
+   "value": 70,
+   "warning": 87
+  },
+  {
+   "critical": 105,
+   "key": "label",
+   "label": "Core 1",
+   "type": "temperature_core",
+   "unit": "C",
+   "value": 66,
+   "warning": 87
+  },
+  {
+   "critical": 105,
+   "key": "label",
+   "label": "Package id 0",
+   "type": "temperature_core",
+   "unit": "C",
+   "value": 70,
+   "warning": 87
+  },
+  {
+   "critical": null,
+   "key": "label",
+   "label": "DIMM",
+   "type": "temperature_core",
+   "unit": "C",
+   "value": 43,
+   "warning": null
+  },
+  {
+   "critical": null,
+   "key": "label",
+   "label": "acpitz 0",
+   "type": "temperature_core",
+   "unit": "C",
+   "value": 61,
+   "warning": null
+  },
+  {
+   "critical": null,
+   "key": "label",
+   "label": "Fan 1",
+   "type": "fan_speed",
+   "unit": "R",
+   "value": 3168,
+   "warning": null
+  }
+ ],
+ "uptime": "2:18:10"
+}

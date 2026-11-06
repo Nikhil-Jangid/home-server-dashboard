@@ -1,0 +1,6 @@
+{
+  "name": "home-server-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "bash scripts/check.sh" }
+}

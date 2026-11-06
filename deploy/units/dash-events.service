@@ -1,0 +1,22 @@
+[Unit]
+Description=home-server-dashboard: page, settings and journal events (loopback only)
+After=network.target
+
+[Service]
+User=@USER@
+Group=@USER@
+SupplementaryGroups=systemd-journal
+ExecStart=/usr/bin/python3 -I @APP_DIR@/dash-events/dash_events.py --host 127.0.0.1 --port 7682 --www @APP_DIR@/www --config-dir @CONFIG_DIR@ @ALLOWED_HOST_ARGS@
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+# Containers to hide from the dashboard: one per line.
+#
+# A line can be a container's name, its compose service name (the "web" in myapp-web-1), or the
+# first 4+ characters of its ID. Hidden containers leave the Containers table and get no
+# Quick Launch tile. Lines starting with # are ignored. Changes show within a minute.
+#
+# Examples (remove the # to use them):
+# watchtower
+# a1b2c3d4

@@ -1,0 +1,30 @@
+# Errors panel: journal lines to keep quiet.
+#
+# Each [section] is one rule. A rule needs a "source" (the program name shown in the panel),
+# a "pattern" (a Python/JavaScript regular expression matched against the message), or both.
+# Rules never hide real errors (journal priority 3 or lower); they only quiet warnings and notices.
+# Edits take effect within a minute; no restart needed. Delete a section to see those lines again.
+
+[pam-sessions]
+# Session opened/closed lines from sudo, cron, sshd, su ...
+pattern = pam_unix\(.*:session\): session (opened|closed)
+
+[systemd-cpu-accounting]
+# The per-unit accounting notice systemd prints after every service or session stops.
+source = systemd
+pattern = Consumed .* CPU time
+
+[sudo-command-log]
+# sudo's log of each command run (the dashboard already hides the command itself).
+source = sudo
+pattern = ^(\S+ : TTY=\S+ ; PWD=.* ; USER=\S+ ; COMMAND=<hidden>|\(command continued\) <hidden>)$
+
+[resolved-degraded]
+# systemd-resolved falling back to plain UDP DNS; harmless and repeats often.
+source = systemd-resolved
+pattern = Using degraded feature set
+
+[kernel-mld]
+# A harmless IPv6 multicast notice some network drivers repeat constantly.
+source = kernel
+pattern = IPv6: MLD: clamping QRV

@@ -1,0 +1,22 @@
+[Unit]
+Description=home-server-dashboard: web terminal (ttyd, loopback only, own login)
+After=network.target
+
+[Service]
+User=@USER@
+Group=@USER@
+WorkingDirectory=@HOME@
+# -b /term: served under /term/  -W: writable  -O: reject foreign Origin
+# -d 3: log errors+warnings only (ttyd's chatty default levels have leaked credentials before).
+# -m 4: at most 4 clients; every connection spawns a login process and a pty.
+# There is no -c and no credential anywhere in this unit: the shell is gated by term/term_login.py
+# (scrypt hash in ~/.config/home-server-dashboard/term.pass, throttled), the Host check in Caddy, and -O.
+ExecStart=/usr/bin/ttyd -d 3 -m 4 -i lo -p 7681 -b /term -W -O -- /usr/bin/python3 -I @APP_DIR@/term/term_login.py
+Restart=on-failure
+RestartSec=5
+# Deliberately NOT sandboxed (no NoNewPrivileges, PrivateTmp, Protect*, RestrictAddressFamilies):
+# after login this is the owner's interactive shell and must be able to use sudo, docker, the real
+# /tmp and the network.
+
+[Install]
+WantedBy=multi-user.target

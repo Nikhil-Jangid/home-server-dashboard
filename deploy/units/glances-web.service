@@ -1,0 +1,28 @@
+[Unit]
+Description=home-server-dashboard: Glances system stats (loopback only)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+# Its own system user, running a root-owned install and config: this service may hold the docker group
+# (root-equivalent), so nothing it runs or reads can be changed from the dashboard's login account.
+User=hsd-glances
+Group=hsd-glances
+@DOCKER_GROUP@
+CacheDirectory=hsd-glances
+Environment=HOME=/var/cache/hsd-glances
+ExecStart=@GLANCES_HOME@/bin/glances -w --disable-webui --bind 127.0.0.1 --port 61208 -C @ETC_DIR@/glances.conf --disable-plugin processlist
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+LockPersonality=yes
+# No PrivateDevices: disk and sensor stats may need /dev.
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="black">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<title>Server Dashboard</title>
+<script src="js/theme-init.js"></script>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page"><div class="wrap">
+
+  <div id="api-banner" class="banner" hidden>
+    <span class="banner-dot"></span>
+    <div class="banner-body">
+      <div class="banner-title">Cannot reach the Glances API</div>
+      <div id="api-banner-detail" class="banner-detail"></div>
+      <div class="banner-fix mono">On the server: <span class="hl">systemctl status glances-web</span> — and confirm Tailscale Serve maps <span class="hl">/api/4/all</span> (<span class="hl">tailscale serve status</span>).</div>
+    </div>
+  </div>
+
+  <header class="card header">
+    <div class="host">
+      <div class="host-line">
+        <div id="host-name" class="host-name"></div>
+        <div id="status-pill" class="pill"><span class="pill-dot"></span><span class="pill-text mono">offline</span></div>
+        <button id="err-badge" class="err-badge mono" type="button" hidden></button>
+      </div>
+      <div id="host-sub" class="mono sub"></div>
+    </div>
+    <div class="head-stats">
+      <div class="stat"><div class="label">Uptime</div><div id="uptime" class="mono stat-val">—</div></div>
+      <div class="stat"><div class="label">CPU package</div><div id="temp" class="mono stat-val">—</div></div>
+      <div class="stat"><div class="label">Last update</div><div id="ago" class="mono stat-val dim">never</div></div>
+    </div>
+    <div class="head-actions">
+      <button id="refresh" class="btn mono" type="button">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 3v5h-5"/></svg>
+        REFRESH
+      </button>
+      <button id="theme-btn" class="btn mono theme-btn" type="button" aria-label="Theme: Midnight — switch to Survey" title="Click: next theme (Survey) · Shift+click or long-press: previous (Phosphor)"><span class="theme-swatch" aria-hidden="true"></span><span id="theme-name">Midnight</span></button>
+    </div>
+  </header>
+
+  <section class="vitals">
+    <div class="card vital">
+      <div class="vital-head"><span class="label-lg">CPU</span><span id="cpu-proc" class="mono xs faint"></span></div>
+      <div class="vital-row">
+        <div id="cpu-gauge" class="gauge">
+          <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="51" stroke-dasharray="240.3 320.4"/><circle class="value" cx="60" cy="60" r="51" stroke-dasharray="0 320.4"/></svg>
+          <div class="gauge-center"><span class="gauge-num mono">—</span><span class="gauge-unit mono">PERCENT</span></div>
+        </div>
+        <div class="vital-info"><div id="cpu-label" class="info"></div><div id="cpu-load" class="mono xs faint"></div></div>
+      </div>
+      <canvas id="cpu-spark" class="spark"></canvas>
+      <div class="stale mono"></div>
+    </div>
+
+    <div class="card vital">
+      <div class="vital-head"><span class="label-lg">Memory</span><span id="mem-swap" class="mono xs faint"></span></div>
+      <div class="vital-row">
+        <div id="mem-gauge" class="gauge">
+          <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="51" stroke-dasharray="240.3 320.4"/><circle class="value" cx="60" cy="60" r="51" stroke-dasharray="0 320.4"/></svg>
+          <div class="gauge-center"><span class="gauge-num mono">—</span><span class="gauge-unit mono">PERCENT</span></div>
+        </div>
+        <div class="vital-info"><div id="mem-sub" class="mono sm strong"></div><div id="mem-free" class="mono xs faint"></div></div>
+      </div>
+      <canvas id="mem-spark" class="spark"></canvas>
+      <div class="stale mono"></div>
+    </div>
+
+    <div class="card vital">
+      <div class="vital-head"><span class="label-lg">Storage</span><span class="mono xs faint">all drives</span></div>
+      <div class="vital-row">
+        <div id="stor-gauge" class="gauge">
+          <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="51" stroke-dasharray="240.3 320.4"/><circle class="value" cx="60" cy="60" r="51" stroke-dasharray="0 320.4"/></svg>
+          <div class="gauge-center"><span class="gauge-num mono">—</span><span class="gauge-unit mono">PERCENT</span></div>
+        </div>
+        <div class="vital-info"><div id="stor-sub" class="mono sm strong"></div><div id="stor-note" class="mono xs faint"></div></div>
+      </div>
+      <div class="bar-slot"><div class="bar"><div id="stor-bar" class="bar-fill"></div></div></div>
+      <div class="stale mono"></div>
+    </div>
+
+    <div class="card vital">
+      <div class="vital-head"><span class="label-lg">Network</span><span id="net-ifaces" class="mono xs faint"></span></div>
+      <div class="net-rows">
+        <div class="net-row">
+          <svg class="net-rx" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg>
+          <span id="rx-num" class="net-num mono">—</span><span id="rx-unit" class="mono xs faint"></span>
+        </div>
+        <div class="net-row">
+          <svg class="net-tx" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>
+          <span id="tx-num" class="net-num mono">—</span><span id="tx-unit" class="mono xs faint"></span>
+        </div>
+      </div>
+      <canvas id="net-spark" class="spark spark-net"></canvas>
+      <div class="stale mono"></div>
+    </div>
+  </section>
+
+  <section id="errors" class="card section">
+    <div class="section-head">
+      <h2 class="h2">Errors</h2>
+      <span id="ev-count" class="mono xs faint"></span>
+      <button id="ev-hidden" class="link-btn mono xs" type="button" hidden></button>
+      <button id="ev-manage" class="link-btn mono xs" type="button" aria-expanded="false" aria-controls="ev-mutes">Manage</button>
+    </div>
+    <div id="ev-chips" class="chips"></div>
+    <div id="ev-mutes" class="ev-mutes" hidden></div>
+    <div id="ev-status" class="ev-status mono" role="status" aria-live="polite" hidden></div>
+    <div id="ev-list" class="ev-list"></div>
+  </section>
+
+  <section id="term-shell" class="term-shell">
+    <div id="term-scrim" class="term-scrim" hidden></div>
+    <div id="term-panel" class="term-panel">
+      <div class="term-head">
+        <div class="term-lights"><span></span><span></span><span></span></div>
+        <div class="term-state"><span id="term-dot" class="dot"></span><span id="term-label" class="mono term-label">connecting</span></div>
+        <div id="term-session" class="mono term-session"></div>
+        <div class="term-actions">
+          <button id="term-reconnect" class="icon-btn" type="button" title="Reconnect" aria-label="Reconnect"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 3v5h-5"/></svg></button>
+          <button id="term-clear" class="icon-btn" type="button" title="Clear" aria-label="Clear"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 12h10l1-12"/></svg></button>
+          <button id="term-fs" class="icon-btn" type="button" title="Fullscreen" aria-label="Fullscreen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5"/><path d="M20 15v5h-5"/><path d="M15 4h5v5"/><path d="M9 20H4v-5"/></svg></button>
+        </div>
+      </div>
+      <div id="term-body" class="term-body">
+        <pre id="term-out" class="term-out" tabindex="0"></pre>
+        <textarea id="term-input" class="term-input" rows="1" tabindex="-1" aria-label="Terminal input" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+        <div id="term-overlay" class="term-overlay" hidden>
+          <div class="mono term-ov-title">Session ended</div>
+          <div id="term-overlay-reason" class="mono term-ov-reason"></div>
+          <button id="term-overlay-btn" class="ghost-btn mono" type="button">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 3v5h-5"/></svg>
+            RECONNECT
+          </button>
+        </div>
+      </div>
+      <div id="term-keys" class="term-keys" role="toolbar" aria-label="Terminal keys"></div>
+      <div id="term-grab" class="term-grab"><span></span></div>
+    </div>
+  </section>
+
+  <section class="card section">
+    <div class="section-head"><h2 class="h2">Storage breakdown</h2><span id="fs-count" class="mono xs faint"></span></div>
+    <div id="fs-rows" class="fs-rows"></div>
+  </section>
+
+  <section id="gpu-card" class="card section" hidden>
+    <div class="section-head"><h2 class="h2">Graphics</h2><span id="gpu-count" class="mono xs faint"></span></div>
+    <div id="gpu-rows" class="fs-rows"></div>
+  </section>
+
+  <section class="stack">
+    <div class="ql-head"><h2 class="h2">Quick launch</h2><button id="ql-reset" class="link-btn mono xs" type="button">Reset order</button></div>
+    <p id="ql-help" class="sr-only">Drag the grip to rearrange. With the keyboard, press Space or Enter on the grip to pick the tile up, arrow keys to move it, Space or Enter to drop it, or Escape to cancel.</p>
+    <p id="ql-problems" class="ql-problems mono xs" hidden></p>
+    <div id="services" class="services" role="list"></div>
+    <div id="ql-live" class="sr-only" aria-live="polite"></div>
+  </section>
+
+  <section class="card table-card">
+    <div class="table-head">
+      <h2 class="h2">Containers</h2>
+      <span id="running" class="mono running"></span>
+      <input id="ct-filter" class="filter mono" placeholder="filter containers…" aria-label="Filter containers" autocomplete="off" spellcheck="false">
+      <select id="ct-sort" class="filter mono ct-sort" aria-label="Sort containers">
+        <option value="name:1">Name A → Z</option><option value="name:-1">Name Z → A</option>
+        <option value="status:1">Status A → Z</option><option value="status:-1">Status Z → A</option>
+        <option value="cpu:-1">CPU high → low</option><option value="cpu:1">CPU low → high</option>
+        <option value="mem:-1">Memory high → low</option><option value="mem:1">Memory low → high</option>
+        <option value="uptime:-1">Uptime longest</option><option value="uptime:1">Uptime shortest</option>
+        <option value="image:1">Image A → Z</option><option value="image:-1">Image Z → A</option>
+      </select>
+    </div>
+    <div class="table-scroll">
+      <table class="ct">
+        <thead><tr id="ct-head">
+          <th data-key="name">Name</th><th data-key="image">Image</th><th data-key="status">Status</th>
+          <th data-key="cpu" class="r">CPU %</th><th data-key="mem" class="r">Memory</th><th data-key="uptime" class="r">Uptime</th>
+        </tr></thead>
+        <tbody id="ct-body"></tbody>
+      </table>
+    </div>
+    <div id="ct-empty" class="empty mono" hidden></div>
+  </section>
+
+  <section class="card section">
+    <div class="section-head"><h2 class="h2">Alerts</h2><span id="alert-count" class="mono xs faint"></span></div>
+    <div id="alerts" class="alerts"></div>
+  </section>
+
+  <footer class="footer mono"><span>GLANCES /api/4/all</span><span id="footer"></span></footer>
+</div></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

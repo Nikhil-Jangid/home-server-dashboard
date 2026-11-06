@@ -1,0 +1,48 @@
+# Installed by home-server-dashboard setup.sh
+# This is /etc/caddy/Caddyfile (a stock one is kept as Caddyfile.orig).
+# Edits here are replaced the next time setup runs.
+#
+# Port 80 on every interface: the dashboard for every name that reaches this server (its name,
+# name.local, its LAN IP, and its tailnet name/IP if it is on Tailscale). The backends stay on 127.0.0.1.
+#
+# DNS-rebinding guard: dash-events refuses unknown Host names for its own paths. ttyd's origin check
+# can't (under rebinding Origin and Host are both the attacker's name), so /term/* first asks
+# dash-events (/_host_ok -> 204 or 403) with the original Host (Caddy forwards it verbatim, port and
+# IPv6 brackets included, so don't rewrite it), and is refused unless it passes.
+#
+# Your own domain: not set up by setup.sh. See "Custom domain" in the README. In short, a site block
+# like this (in a Caddyfile of your own, or a proxy in front) and the domain added with
+# --allowed-host in the dash-events unit:
+# example.com {
+#	reverse_proxy 127.0.0.1:7682
+# }
+{
+	auto_https off
+	admin off
+}
+
+http://:80 {
+	# Home network and tailnet only: a request from a public address (a forwarded port, a VPS's public IP,
+	# a global IPv6 address) never reaches the page or the terminal login.
+	@outside not remote_ip 127.0.0.0/8 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 100.64.0.0/10 ::1/128 fc00::/7 fe80::/10
+	handle @outside {
+		respond 403
+	}
+	# A request without Host (HTTP/1.0) would reach the backends as 127.0.0.1: refuse it here.
+	@nohost expression {host} == ""
+	handle @nohost {
+		respond 400
+	}
+	@term path /term/ws /term/token
+	handle @term {
+		forward_auth 127.0.0.1:7682 {
+			uri /_host_ok
+			header_up -Upgrade
+			header_up -Connection
+		}
+		reverse_proxy 127.0.0.1:7681
+	}
+	handle {
+		reverse_proxy 127.0.0.1:7682
+	}
+}

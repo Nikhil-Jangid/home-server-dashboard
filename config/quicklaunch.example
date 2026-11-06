@@ -1,0 +1,25 @@
+# Quick Launch: extra tiles for the dashboard.
+#
+# Every running Docker container that publishes a port already gets a tile with an Open button.
+# Use this file to rename one, change its port, or add a tile for something that is not a container.
+#
+# Each [section] is one tile; the section name is the tile's name. Give it ONE of:
+#   container = <container name or the first 4+ characters of its ID>   (replaces that container's tile)
+#   port      = <port number>                                           (a service on this server)
+# and optionally:
+#   port = <port>     for a container: which port Open goes to (default: its first published port)
+#   desc = <text>     a short line under the name
+#
+# Open goes to http://<the address you opened the dashboard on>:<port>.
+# Changes show within a minute. Mistakes are named on the dashboard, above the tiles.
+#
+# Examples (remove the # in front of the lines to use them):
+#
+# [Router admin]
+# port = 8443
+# desc = the box under the desk
+#
+# [Photos]
+# container = immich_server
+# port = 2283
+# desc = family photos
