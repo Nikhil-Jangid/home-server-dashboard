@@ -350,6 +350,45 @@ def _host_ports(v):
     return found[:8] or None
 
 
+BONDING_DIR = "/proc/net/bonding"
+_IFNAME_RX = re.compile(r"^[A-Za-z0-9_.:-]{1,15}$")  # IFNAMSIZ - 1
+
+
+def parse_bonding(text: str) -> dict:
+    """Active port and per-port link state from one /proc/net/bonding/<bond> file."""
+    active, ports, port = None, [], None
+    for line in text.splitlines():
+        key, sep, value = line.partition(":")
+        if not sep:
+            continue
+        key, value = key.strip(), value.strip()
+        if key == "Currently Active Slave":
+            active = value if _IFNAME_RX.match(value) and value != "None" else None
+        elif key == "Slave Interface":
+            port = {"name": value, "up": False} if _IFNAME_RX.match(value) else None
+            if port:
+                ports.append(port)
+        elif key == "MII Status" and port is not None:
+            port["up"] = value == "up"  # before the first port this line is the bond's own status
+    return {"active": active, "ports": ports}
+
+
+def read_bonds(directory: str = BONDING_DIR, limit: int = 8) -> list[dict]:
+    """Every bond the kernel reports; empty when there are none or /proc can't be read."""
+    try:
+        names = sorted(n for n in os.listdir(directory) if _IFNAME_RX.match(n))[:limit]
+    except OSError:
+        return []
+    bonds = []
+    for name in names:
+        try:
+            with open(os.path.join(directory, name), encoding="utf-8", errors="replace") as f:
+                bonds.append({"name": name, **parse_bonding(f.read(65536))})
+        except OSError:
+            continue
+    return bonds
+
+
 def _items(lst, fn):
     return [fn(x) for x in lst if isinstance(x, dict)] if isinstance(lst, list) else []
 
@@ -879,7 +918,8 @@ class DashServer(ThreadingHTTPServer):
 
 def make_handler(grouper: Grouper, hub: Hub, heartbeat_s: float = 15, glances_url: str = GLANCES_URL,
                  www: str = None, allowed_hosts=(), host_discover=None, request_timeout: float = REQUEST_TIMEOUT_S,
-                 glances_deadline_s: float = 4, settings=None, ports=None):
+                 glances_deadline_s: float = 4, settings=None, ports=None,
+                 bonding_dir: str = BONDING_DIR):
     www_root = os.path.realpath(www) if www else None
     hosts = HostAllowList(allowed_hosts, discover=host_discover)
 
@@ -1010,7 +1050,11 @@ def make_handler(grouper: Grouper, hub: Hub, heartbeat_s: float = 15, glances_ur
             except (OSError, ValueError, http.client.HTTPException):
                 self._json({"error": "glances unreachable"}, status=502)
                 return
-            self._json(filter_glances(data))
+            out = filter_glances(data)
+            bonds = read_bonds(bonding_dir)
+            if bonds:
+                out["bond"] = bonds  # which link is carrying traffic; Glances doesn't report it
+            self._json(out)
 
         def _stream(self):
             q = hub.subscribe()

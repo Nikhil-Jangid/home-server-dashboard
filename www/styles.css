@@ -181,6 +181,9 @@ button, input { font: inherit; }
 .net-row { display: flex; align-items: center; gap: 10px; }
 .net-num { font-size: 22px; font-weight: 500; color: var(--t-primary); letter-spacing: -.02em; }
 .net-rx { color: var(--healthy); flex: none; } .net-tx { color: var(--violet); flex: none; }
+.net-if.active { color: var(--healthy); font-weight: 600; }
+.net-if.active::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 4px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+.net-if.down { text-decoration: line-through; }
 
 /* errors */
 /* ===== Errors section: header, chips, rows, local mutes ===== */

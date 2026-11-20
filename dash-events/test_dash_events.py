@@ -1206,6 +1206,64 @@ def _fake_systemctl(stdout="", rc=0, exc=None):
     return run, calls
 
 
+BOND_ETH_ACTIVE = """Ethernet Channel Bonding Driver: v6.8.0
+
+Bonding Mode: fault-tolerance (active-backup) (fail_over_mac active)
+Primary Slave: enp3s0 (primary_reselect always)
+Currently Active Slave: enp3s0
+MII Status: up
+MII Polling Interval (ms): 100
+
+Slave Interface: enp3s0
+MII Status: up
+Speed: 1000 Mbps
+Duplex: full
+Link Failure Count: 1
+
+Slave Interface: wlp2s0
+MII Status: up
+Speed: Unknown
+Link Failure Count: 0
+"""
+
+
+class BondingTest(unittest.TestCase):
+    def test_parses_active_port_and_link_states(self):
+        self.assertEqual(de.parse_bonding(BOND_ETH_ACTIVE), {
+            "active": "enp3s0",
+            "ports": [{"name": "enp3s0", "up": True}, {"name": "wlp2s0", "up": True}],
+        })
+
+    def test_failover_to_wifi_with_cable_down(self):
+        text = BOND_ETH_ACTIVE.replace("Currently Active Slave: enp3s0", "Currently Active Slave: wlp2s0")
+        text = text.replace("Slave Interface: enp3s0\nMII Status: up", "Slave Interface: enp3s0\nMII Status: down")
+        self.assertEqual(de.parse_bonding(text), {
+            "active": "wlp2s0",
+            "ports": [{"name": "enp3s0", "up": False}, {"name": "wlp2s0", "up": True}],
+        })
+
+    def test_no_active_port(self):
+        text = BOND_ETH_ACTIVE.replace("Currently Active Slave: enp3s0", "Currently Active Slave: None")
+        self.assertIsNone(de.parse_bonding(text)["active"])
+
+    def test_rejects_odd_names_and_garbage(self):
+        text = BOND_ETH_ACTIVE.replace("Slave Interface: wlp2s0", "Slave Interface: <script>x</script>")
+        self.assertEqual([p["name"] for p in de.parse_bonding(text)["ports"]], ["enp3s0"])
+        self.assertEqual(de.parse_bonding("nonsense\n\x00"), {"active": None, "ports": []})
+
+    def test_read_bonds_from_directory(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, "bond0"), "w") as f:
+                f.write(BOND_ETH_ACTIVE)
+            with open(os.path.join(d, "bad name!"), "w") as f:
+                f.write(BOND_ETH_ACTIVE)
+            self.assertEqual(de.read_bonds(d), [{"name": "bond0", **de.parse_bonding(BOND_ETH_ACTIVE)}])
+
+    def test_read_bonds_missing_directory_is_empty(self):
+        self.assertEqual(de.read_bonds("/nonexistent/bonding"), [])
+
+
 class GlancesProxyTest(unittest.TestCase):
     def _serve(self, handler_cls):
         srv = ThreadingHTTPServer(("127.0.0.1", 0), handler_cls)
@@ -1239,6 +1297,32 @@ class GlancesProxyTest(unittest.TestCase):
         self.assertEqual((status, ctype), (200, "application/json"))
         self.assertEqual(body["containers"][0]["name"], "busybox")
         self.assertNotIn("command", body["containers"][0])
+
+    def test_attaches_bond_state(self):
+        import tempfile
+
+        class Upstream(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def do_GET(self):
+                body = json.dumps(SAMPLE).encode()
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+        up = self._serve(Upstream)
+        url = f"http://127.0.0.1:{up}/api/4/all"
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, "bond0"), "w") as f:
+                f.write(BOND_ETH_ACTIVE)
+            port = self._serve(de.make_handler(de.Grouper(), de.Hub(), glances_url=url, bonding_dir=d))
+            _, _, body = self._get(port)
+        self.assertEqual(body["bond"], [{"name": "bond0", "active": "enp3s0",
+                                          "ports": [{"name": "enp3s0", "up": True}, {"name": "wlp2s0", "up": True}]}])
+        port = self._serve(de.make_handler(de.Grouper(), de.Hub(), glances_url=url, bonding_dir="/nonexistent"))
+        self.assertNotIn("bond", self._get(port)[2])
 
     def test_upstream_down_is_502(self):
         port = self._serve(de.make_handler(de.Grouper(), de.Hub(), glances_url="http://127.0.0.1:9/api/4/all"))

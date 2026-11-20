@@ -205,5 +205,43 @@ test('poller with retryDelay backs off on failure, resets on success, and stops 
 test('kernel tunnel stubs are not network adapters', () => {
   const names = ['tunl0', 'gre0', 'gretap0', 'erspan0', 'ip_vti0', 'ip6_vti0', 'sit0', 'ip6tnl0', 'ip6gre0', 'eth0', 'wlan0', 'bond0'];
   const v = parseGlances({ network: names.map(interface_name => ({ interface_name })) });
-  assert.deepEqual(v.nets, ['eth0', 'wlan0', 'bond0']);
+  assert.deepEqual(v.nets, ['eth0', 'wlan0']);
+});
+
+test('links mark the bond port carrying traffic', () => {
+  const network = [
+    { interface_name: 'enp3s0', bytes_recv_rate_per_sec: 1, bytes_sent_rate_per_sec: 1 },
+    { interface_name: 'wlp2s0', bytes_recv_rate_per_sec: 1, bytes_sent_rate_per_sec: 1 },
+    { interface_name: 'bond0', bytes_recv_rate_per_sec: 2, bytes_sent_rate_per_sec: 2 }
+  ];
+  const bond = [{ name: 'bond0', active: 'enp3s0', ports: [{ name: 'enp3s0', up: true }, { name: 'wlp2s0', up: true }] }];
+  assert.deepEqual(parseGlances({ network, bond }).links, [
+    { name: 'enp3s0', state: 'active', bond: 'bond0' },
+    { name: 'wlp2s0', state: 'standby', bond: 'bond0' }
+  ]);
+});
+
+test('a bond is not counted on top of its ports', () => {
+  const v = parseGlances({ network: [
+    { interface_name: 'enp3s0', bytes_recv_rate_per_sec: 100, bytes_sent_rate_per_sec: 10 },
+    { interface_name: 'wlp2s0', bytes_recv_rate_per_sec: 1, bytes_sent_rate_per_sec: 0 },
+    { interface_name: 'bond0', bytes_recv_rate_per_sec: 101, bytes_sent_rate_per_sec: 10 }
+  ] });
+  assert.equal(v.rx, 101);
+  assert.equal(v.tx, 10);
+  assert.deepEqual(v.nets, ['enp3s0', 'wlp2s0']);
+});
+
+test('links show a port whose cable is down', () => {
+  const v = parseGlances({
+    network: [{ interface_name: 'enp3s0' }, { interface_name: 'wlp2s0' }],
+    bond: [{ name: 'bond0', active: 'wlp2s0', ports: [{ name: 'enp3s0', up: false }, { name: 'wlp2s0', up: true }] }]
+  });
+  assert.deepEqual(v.links.map(l => l.state), ['down', 'active']);
+});
+
+test('links without bond data fall back to plain names', () => {
+  const v = parseGlances({ network: [{ interface_name: 'enp0s25' }], bond: 'junk' });
+  assert.deepEqual(v.links, [{ name: 'enp0s25', state: null, bond: null }]);
+  assert.deepEqual(parseGlances({}).links, []);
 });

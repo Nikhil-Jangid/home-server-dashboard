@@ -3,7 +3,20 @@
 const num = x => (Number.isFinite(Number(x)) ? Number(x) : 0);
 const arr = x => (Array.isArray(x) ? x.filter(e => e && typeof e === 'object') : []);
 // Loopback, container bridges, VPN tunnels and the kernel's tunnel stubs (gre0, sit0 ...) are not adapters.
-const VIRTUAL_IF = /^(lo$|docker|br-|veth|tun|tailscale|gre|gretap|erspan|ip6?_vti|ip6?tnl|ip6gre|sit\d)/;
+// A bond's traffic is its ports' traffic, so it is skipped like the other virtual interfaces.
+const VIRTUAL_IF = /^(lo$|docker|br-|veth|tun|tailscale|bond|gre|gretap|erspan|ip6?_vti|ip6?tnl|ip6gre|sit\d)/;
+
+/** Each physical interface with its bond role: 'active' carries the traffic, 'standby' is the failover, 'down' has no link. */
+function bondLinks(names, bonds) {
+  const role = new Map();
+  for (const b of bonds) {
+    for (const p of arr(b.ports)) {
+      const name = String(p.name);
+      role.set(name, { state: name === b.active ? 'active' : p.up === true ? 'standby' : 'down', bond: String(b.name) });
+    }
+  }
+  return names.map(name => ({ name, state: role.get(name)?.state ?? null, bond: role.get(name)?.bond ?? null }));
+}
 
 // Mounts that are never "storage" to a person: boot partitions, snaps, container layers, runtime dirs.
 const PSEUDO_MNT = /^\/(boot|snap|run|dev|sys|proc)(\/|$)|^\/var\/lib\/(docker|containers)\//;
@@ -46,6 +59,7 @@ export function parseGlances(d) {
   const physical = arr(d.network).filter(n => !VIRTUAL_IF.test(n.interface_name || n.name || ''));
   const rx = physical.reduce((s, n) => s + num(n.bytes_recv_rate_per_sec), 0);
   const tx = physical.reduce((s, n) => s + num(n.bytes_sent_rate_per_sec), 0);
+  const nets = physical.map(n => n.interface_name || n.name);
 
   const temps = arr(d.sensors).filter(s => s.unit === 'C');
   const pkg = temps.find(s => /package|pkg/i.test(s.label || '')) || temps.find(s => /core 0/i.test(s.label || '')) || temps[0];
@@ -72,7 +86,8 @@ export function parseGlances(d) {
     uptime: d.uptime ? String(d.uptime) : null,
     fsList, storPct: stor.pct, storSize: stor.size, storUsed: stor.used,
     gpus: arr(d.gpu).map(g => ({ name: String(g.name || 'GPU'), util: g.proc != null ? num(g.proc) : null, mem: g.mem != null ? num(g.mem) : null, temp: g.temperature != null ? num(g.temperature) : null })),
-    rx, tx, nets: physical.map(n => n.interface_name || n.name),
+    rx, tx, nets,
+    links: bondLinks(nets, arr(d.bond)),
     temp: pkg ? num(pkg.value) : null,
     maxTemp: hottest ? num(hottest.value) : null,
     maxTempLabel: hottest ? String(hottest.label || 'sensor') : null,
