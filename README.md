@@ -120,6 +120,84 @@ pattern = retrying in \d+s
 Theme, error filters and the Quick Launch order (drag the tiles) are set in the page itself. The order is
 remembered per browser.
 
+## Optional: Ethernet with Wi-Fi as a backup
+
+If your server has both an Ethernet port and Wi-Fi, Linux can pair them into one connection (a **bond**):
+traffic uses the cable, and if the cable or switch fails it moves to Wi-Fi within a second and back once
+the cable returns. The server keeps one IP address throughout, so nothing that connects to it notices.
+
+The dashboard needs no setup for this. When a bond exists, the Network card highlights the link carrying
+traffic (accent colour and a dot), dims the standby link, and strikes through a link with no connection.
+Hover a name to see its role.
+
+Bonding is built into the Linux kernel. These steps use NetworkManager (`nmcli`), which Ubuntu Desktop and
+many server installs already use: if `nmcli general` prints a status, you have it. Do this **at the server's
+own keyboard and screen, not over SSH**, because the network restarts during step 4.
+
+1. Find your adapter names and your current connection:
+
+   ```sh
+   ip -br link          # e.g. enp3s0 (Ethernet) and wlp2s0 (Wi-Fi)
+   nmcli -t -f NAME,DEVICE connection show --active
+   ```
+
+2. Create the bond and add both adapters to it. `fail_over_mac=active` is required, because Wi-Fi cards can't
+   take on another adapter's hardware address:
+
+   ```sh
+   sudo nmcli con add type bond ifname bond0 con-name bond0 \
+     bond.options "mode=active-backup,fail_over_mac=active,miimon=100"
+   sudo nmcli con add type ethernet ifname enp3s0 con-name bond0-eth master bond0
+   sudo nmcli con add type wifi ifname wlp2s0 con-name bond0-wifi master bond0 \
+     ssid "Your Wi-Fi name" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "your Wi-Fi password"
+   ```
+
+3. Give the bond a fixed address (use your own network's values). With `fail_over_mac=active`, the bond's
+   hardware address changes with the active link, so a router handing out addresses by DHCP could give the
+   server a different IP after a failover:
+
+   ```sh
+   sudo nmcli con modify bond0 ipv4.method manual ipv4.addresses 192.168.1.20/24 \
+     ipv4.gateway 192.168.1.1 ipv4.dns "1.1.1.1 8.8.8.8"
+   ```
+
+4. Switch over. Turn off the old connections from step 1 so they don't fight the bond, then start it:
+
+   ```sh
+   sudo nmcli con modify "Wired connection 1" connection.autoconnect no   # your names from step 1
+   sudo nmcli con up bond0
+   ```
+
+5. Prefer Ethernet. Without this, whichever link comes up first at boot (often Wi-Fi) keeps the job. A small
+   NetworkManager hook sets the preference every time the bond comes up:
+
+   ```sh
+   sudo tee /etc/NetworkManager/dispatcher.d/50-bond0-primary >/dev/null <<'EOF'
+   #!/bin/sh
+   # Prefer the Ethernet port as the active bond0 link; Wi-Fi stays as the backup.
+   case "$1" in bond0|enp3s0) ;; *) exit 0 ;; esac
+   case "$2" in up|pre-up) ;; *) exit 0 ;; esac
+   P=/sys/class/net/bond0/bonding/primary
+   [ -w "$P" ] && echo enp3s0 > "$P"
+   exit 0
+   EOF
+   sudo chmod 755 /etc/NetworkManager/dispatcher.d/50-bond0-primary
+   sudo /etc/NetworkManager/dispatcher.d/50-bond0-primary bond0 up
+   ```
+
+   Replace `enp3s0` (twice) with your Ethernet name. Don't put `primary=` in `bond.options` instead: on
+   Ubuntu, NetworkManager saves its settings through netplan, which rejects that value and can leave the
+   server **without a network after the next reboot**. After any network change, `sudo netplan generate`
+   printing nothing means the saved settings are valid.
+
+6. Check it: `cat /proc/net/bonding/bond0` should show `Currently Active Slave: enp3s0` with both links
+   `MII Status: up`. Unplug the cable to watch it move to Wi-Fi, and plug it back in to watch it return.
+
+To undo: `sudo nmcli con delete bond0 bond0-eth bond0-wifi`,
+`sudo rm /etc/NetworkManager/dispatcher.d/50-bond0-primary`, then turn your old connection back on with
+`sudo nmcli con modify "Wired connection 1" connection.autoconnect yes` and
+`sudo nmcli con up "Wired connection 1"`.
+
 ## Updating
 
 ```sh
@@ -166,7 +244,8 @@ Serve settings on the server). Setup masks the ttyd package's own `ttyd.service`
 
 - **Caddy** on port 80 serves everything and checks the Host name before it lets anything reach the terminal.
 - **dash-events** (Python, standard library only, 127.0.0.1:7682) serves the page, reads your three files,
-  streams the journal's warnings and errors, and passes system stats through from Glances.
+  streams the journal's warnings and errors, and passes system stats through from Glances, plus which link
+  of a network bond is active (from `/proc/net/bonding`, which Glances doesn't report).
 - **Glances** (127.0.0.1:61208) collects CPU, memory, drives, network, sensors, GPU and Docker stats. It runs
   as its own system user (`hsd-glances`) from a root-owned install in `/opt/home-server-dashboard`, because it is
   the only part that may read Docker.

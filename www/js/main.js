@@ -104,7 +104,23 @@ function renderVitalText() {
   $('mem-free').textContent = v && v.mem.available != null ? gib(v.mem.available) + ' GiB available' : '—';
   $('stor-sub').textContent = v && v.storSize ? tib(v.storSize - v.storUsed) + ' TiB free of ' + tib(v.storSize) + ' TiB' : '—';
   $('stor-note').textContent = v ? v.fsList.length + (v.fsList.length === 1 ? ' drive' : ' drives') : '—';
-  $('net-ifaces').textContent = v && v.nets.length ? v.nets.slice(0, 2).join(' · ') : '—';
+  renderLinks(v ? v.links.slice(0, 2) : []);
+}
+
+const LINK_TITLE = { active: 'carrying traffic', standby: 'standby · takes over if the active link fails', down: 'no link' };
+let shownLinks = null;
+function renderLinks(links) {
+  const key = JSON.stringify(links);
+  if (key === shownLinks) return; // rebuilt only on change, so an open tooltip isn't reset every poll
+  shownLinks = key;
+  if (!links.length) { setChildren($('net-ifaces'), '—'); return; }
+  setChildren($('net-ifaces'), links.map((l, i) => [
+    i ? ' · ' : null,
+    h('span', {
+      class: l.state ? 'net-if ' + l.state : 'net-if',
+      title: l.state ? l.name + ' — ' + LINK_TITLE[l.state] + ' (' + l.bond + ')' : null
+    }, l.name)
+  ]));
 }
 
 function warnIcon(color) {
