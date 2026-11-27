@@ -37,7 +37,9 @@ function parseFs(f) {
 function storageList(fs) {
   const seen = new Set();
   return fs.filter(f => !PSEUDO_MNT.test(f.mnt) && !PSEUDO_FS.has(f.type) && !seen.has(f.mnt) && seen.add(f.mnt))
-    .sort((a, b) => (a.mnt === '/' ? -1 : b.mnt === '/' ? 1 : a.mnt < b.mnt ? -1 : a.mnt > b.mnt ? 1 : 0));
+    .map(f => ({ ...f, os: f.mnt === '/' }))
+    // the OS drive first, then largest to smallest; equal sizes by mount point so the order never flickers
+    .sort((a, b) => (b.os - a.os) || (b.size - a.size) || (a.mnt < b.mnt ? -1 : a.mnt > b.mnt ? 1 : 0));
 }
 
 /** Used/size across distinct devices, so a bind mount of the same disk is counted once. */

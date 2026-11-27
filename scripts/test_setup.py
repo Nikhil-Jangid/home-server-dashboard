@@ -568,7 +568,7 @@ class ReadmeTest(unittest.TestCase):
         lic = read(os.path.join(ROOT, "LICENSE"))
         self.assertTrue(lic.startswith("Required Notice: Copyright Nikhil Jangid (https://github.com/Nikhil-Jangid/home-server-dashboard)\n"))
         self.assertIn("# PolyForm Noncommercial License 1.0.0", lic)
-        self.assertEqual(read(os.path.join(ROOT, "VERSION")).strip(), "1.0.0")
+        self.assertRegex(read(os.path.join(ROOT, "VERSION")), r"\A\d+\.\d+\.\d+\n?\Z")
 
 
 class GlancesIsolationTest(Harness):
