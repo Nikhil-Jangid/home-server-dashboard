@@ -135,29 +135,80 @@ function warnIcon(color) {
   return svg;
 }
 
+// ── storage breakdown: OS drive first, then by size; mounts fade in, unmounts fade out ──
+const FS_LEAVE_MS = 450;
+let fsPainted = false; // the first paint shows rows without the fade-in
+
+function createFsRow(f) {
+  const r = { warn: h('span', { class: 'fs-warn' }), mnt: h('span', { class: 'fs-mnt' }), size: h('span', { class: 'fs-size' }),
+    detail: h('span', { class: 'fs-detail' }), pct: h('span', { class: 'fs-pct' }), fill: h('div', { class: 'fs-fill' }) };
+  const el = h('div', { class: 'fs-row', dataset: { mnt: f.mnt } },
+    h('div', { class: 'fs-line' }, r.warn, r.mnt, f.os ? h('span', { class: 'fs-tag' }, 'OS drive') : null, r.size, r.detail, r.pct),
+    h('div', { class: 'fs-bar' }, r.fill));
+  REFS.set(el, r);
+  updateFsRow(el, f);
+  return el;
+}
+
+function updateFsRow(el, f) {
+  const r = REFS.get(el);
+  const color = state.ok ? tone(f.pct) : COLORS.muted;
+  const size = bytes(f.size), used = bytes(f.used), free = bytes(f.free);
+  const warn = level(f.pct) ? tone(f.pct) : null;
+  if (r.warnColor !== warn) { r.warnColor = warn; setChildren(r.warn, warn ? warnIcon(warn) : null); }
+  setText(r.mnt, f.mnt);
+  setText(r.size, size.n + ' ' + size.u);
+  setText(r.detail, used.n + ' ' + used.u + ' used · ' + free.n + ' ' + free.u + ' free');
+  setText(r.pct, f.pct.toFixed(1) + '%');
+  r.pct.style.color = color;
+  r.fill.style.width = clampPct(f.pct).toFixed(1) + '%';
+  r.fill.style.background = color;
+}
+
+function leaveFsRow(el, reduceMotion) {
+  el.classList.add('fs-leaving');
+  el.setAttribute('aria-hidden', 'true');
+  if (reduceMotion || typeof requestAnimationFrame !== 'function') { el.remove(); return; }
+  el.style.maxHeight = el.getBoundingClientRect().height + 'px'; // collapse from its real height, not a guess
+  requestAnimationFrame(() => el.classList.add('fs-gone'));
+  setTimeout(() => el.remove(), FS_LEAVE_MS + 50);
+}
+
 function renderStorage() {
-  const { ok, view: v } = state;
-  $('fs-count').textContent = v ? v.fsList.length + ' mounted' : 'unavailable';
-  if (!v || !v.fsList.length) {
-    setChildren($('fs-rows'), h('div', { class: 'fs-row' },
+  const v = state.view;
+  const rows = v ? v.fsList : [];
+  $('fs-count').textContent = v ? rows.length + ' mounted' : 'unavailable';
+  const parent = $('fs-rows');
+  if (!rows.length) {
+    setChildren(parent, h('div', { class: 'fs-row fs-empty' },
       h('div', { class: 'fs-line' }, h('span', { class: 'fs-mnt' }, '—'), h('span', { class: 'fs-size' }, 'unavailable'),
         h('span', { class: 'fs-detail' }, v ? 'no drives reported' : '—'), h('span', { class: 'fs-pct', style: { color: COLORS.muted } }, '—')),
       h('div', { class: 'fs-bar' })));
     return;
   }
-  setChildren($('fs-rows'), v.fsList.map(f => {
-    const mnt = f.mnt;
-    const color = ok ? tone(f.pct) : COLORS.muted;
-    const size = bytes(f.size), used = bytes(f.used), free = bytes(f.free);
-    return h('div', { class: 'fs-row' },
-      h('div', { class: 'fs-line' },
-        level(f.pct) ? warnIcon(tone(f.pct)) : null,
-        h('span', { class: 'fs-mnt' }, mnt),
-        h('span', { class: 'fs-size' }, size.n + ' ' + size.u),
-        h('span', { class: 'fs-detail' }, used.n + ' ' + used.u + ' used · ' + free.n + ' ' + free.u + ' free'),
-        h('span', { class: 'fs-pct', style: { color } }, f.pct.toFixed(1) + '%')),
-      h('div', { class: 'fs-bar' }, h('div', { class: 'fs-fill', style: { width: clampPct(f.pct).toFixed(1) + '%', background: color } })));
-  }));
+  const reduceMotion = prefersReducedMotion();
+  const animate = fsPainted && !reduceMotion;
+  const live = new Map();
+  for (const el of [...parent.children]) {
+    if (el.classList.contains('fs-empty')) el.remove();
+    else if (!el.classList.contains('fs-leaving')) live.set(el.dataset.mnt, el);
+  }
+  const want = new Set(rows.map(f => f.mnt));
+  for (const [mnt, el] of live) if (!want.has(mnt)) { live.delete(mnt); leaveFsRow(el, !animate); }
+  flip(parent, () => {
+    let ref = parent.firstChild;
+    for (const f of rows) {
+      while (ref && ref.classList.contains('fs-leaving')) ref = ref.nextSibling; // a fading row keeps its spot
+      let el = live.get(f.mnt);
+      if (el) updateFsRow(el, f);
+      else {
+        el = createFsRow(f);
+        if (animate) { el.classList.add('fs-entering'); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('fs-entering'))); }
+      }
+      if (el !== ref) parent.insertBefore(el, ref); else ref = ref.nextSibling;
+    }
+  }, { reduceMotion: !animate });
+  fsPainted = true;
 }
 
 function renderGpus() {

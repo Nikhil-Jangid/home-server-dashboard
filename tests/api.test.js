@@ -32,12 +32,20 @@ test('parseGlances tolerates an empty payload', () => {
   assert.deepEqual(v.nets, []);
 });
 
-test('storage lists real filesystems, root first then by path, without pseudo mounts or duplicates', () => {
+test('storage lists real filesystems, root first, equal sizes by path, without pseudo mounts or duplicates', () => {
   const F = (mnt_point, extra = {}) => ({ mnt_point, device_name: '/dev/' + mnt_point.replace(/\W/g, ''), fs_type: 'ext4', size: 100, used: 40, free: 60, percent: 40, ...extra });
   const v = parseGlances({ fs: [F('/srv/b'), F('/'), F('/srv/a'), F('/boot/efi', { fs_type: 'vfat' }), F('/snap/core/1', { fs_type: 'squashfs' }),
     F('/var/lib/docker/overlay2/x/merged', { fs_type: 'overlay' }), F('/run/user/1000', { fs_type: 'tmpfs' }), F('/srv/a')] });
   assert.deepEqual(v.fsList.map(f => f.mnt), ['/', '/srv/a', '/srv/b']);
   assert.equal(v.pool, undefined);
+});
+
+test('storage puts the OS drive first and tagged, then the rest from largest to smallest', () => {
+  const G = 2 ** 30;
+  const F = (mnt_point, size) => ({ mnt_point, device_name: '/dev/' + mnt_point.replace(/\W/g, ''), fs_type: 'ext4', size: size * G, used: G, free: (size - 1) * G });
+  const v = parseGlances({ fs: [F('/mnt/small', 120), F('/mnt/big', 2000), F('/', 30), F('/mnt/mid', 500)] });
+  assert.deepEqual(v.fsList.map(f => f.mnt), ['/', '/mnt/big', '/mnt/mid', '/mnt/small']);
+  assert.deepEqual(v.fsList.map(f => f.os), [true, false, false, false]);
 });
 
 test('a FAT/exFAT USB drive is real storage; only the EFI partition is hidden (by its path)', () => {

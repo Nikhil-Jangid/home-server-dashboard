@@ -294,7 +294,15 @@ button, input { font: inherit; }
 .fs-detail { margin-left: auto; font-size: 12px; color: var(--t-muted); }
 .fs-pct { font-size: 13px; min-width: 52px; text-align: right; }
 .fs-bar { display: flex; height: 9px; border-radius: 5px; background: var(--fs-track); border: 1px solid color-mix(in srgb, var(--t-primary) 4%, transparent); overflow: hidden; }
-.fs-fill { height: 100%; }
+.fs-fill { height: 100%; transition: width .6s ease; }
+.fs-warn:empty { display: none; }
+.fs-tag { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; color: var(--healthy-hover); border: 1px solid color-mix(in srgb, var(--healthy) 35%, transparent); background: color-mix(in srgb, var(--healthy) 8%, transparent); align-self: center; }
+/* mounts fade in; unmounts fade, fold their height and the gap below them away, then leave the DOM */
+.fs-row { transition: opacity .35s ease, transform .35s ease, max-height .45s ease, margin .45s ease; }
+.fs-row.fs-entering { opacity: 0; transform: translateY(-6px); }
+.fs-row.fs-leaving { overflow: hidden; pointer-events: none; }
+.fs-row.fs-gone { opacity: 0; max-height: 0 !important; margin-bottom: -16px; }
+@media (prefers-reduced-motion: reduce) { .fs-row, .fs-fill { transition: none !important; } }
 
 /* services */
 .services { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 14px; }
@@ -397,7 +405,7 @@ button, input { font: inherit; }
 .footer { display: flex; justify-content: space-between; gap: 12px; font-size: 10px; letter-spacing: .08em; color: var(--t-placeholder); padding-top: 4px; }
 
 /* Phosphor squares off the controls to match its 3 px cards (shape only; colours stay in the tokens) */
-:root[data-theme="phosphor"] :is(.btn, .icon-btn, .ghost-btn, .open-btn, .filter, .banner, .alert, .chip, .pill, .err-badge, .bar, .bar-fill, .fs-bar, .ql-handle, .theme-swatch) { border-radius: 2px; }
+:root[data-theme="phosphor"] :is(.btn, .icon-btn, .ghost-btn, .open-btn, .filter, .banner, .alert, .chip, .pill, .err-badge, .bar, .bar-fill, .fs-bar, .fs-tag, .ql-handle, .theme-swatch) { border-radius: 2px; }
 
 @media (max-width: 560px) {
   .page { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
